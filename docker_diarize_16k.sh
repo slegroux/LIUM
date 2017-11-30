@@ -1,4 +1,21 @@
-#!/urs/bin/env bash
+#!/usr/bin/env bash
 CONTAINER_ID=$1
 WAV_FILE=$2
-docker exec $CONTAINER_ID bash -c "diarize_16k.sh /root/Data/ $WAV_FILE"
+OUTPUT_FOLDER=DiarizationOut
+BASE_NAME=$(basename $WAV_FILE)
+NAME="${BASE_NAME%.*}"
+
+echo '--- Check audio sample rate is 16kHz'
+is_16kHz=$(soxi $WAV_FILE |grep -i 'sample rate'|cut -f2 -d":"| xargs -I{} echo {} == 16000 | bc)
+if [ $is_16kHz -eq 1 ]; then
+    docker exec $CONTAINER_ID bash -c "./diarize_16k.sh ../Data/$WAV_FILE ../Data/DiarizationOut"
+    cp $OUTPUT_FOLDER/$NAME/$NAME.ev_is.120.seg $OUTPUT_FOLDER
+    echo '--- load to S3 bucket'
+    aws s3 cp $OUTPUT_FOLDER/$NAME/$NAME.ev_is.120.seg s3://workfit-diarization
+    rm -rf $$OUTPUT_FOLDER
+    exit 0
+else
+  echo '--- Diarization feature works only for 16kHz audio'
+  exit 1
+fi
+
