@@ -5,7 +5,7 @@ import subprocess
 import shlex
 import logging
 
-from IPython import embed
+#from IPython import embed
 
 sqs = boto3.resource('sqs')
 queue_name = 'workfit-diarization-test'
@@ -14,7 +14,7 @@ URL = 'https://sqs.us-west-2.amazonaws.com/709167633498/workfit-diarization-test
 
 def process(bucket_name, file_name):
     print(bucket_name, file_name)
-    cmd='./s3_diarize_16k.sh s3://workfit-diarization-input-staging/'+ file_name + ' s3://workfit-diarization-output-staging'
+    cmd = './s3_diarize_16k.sh s3://workfit-diarization-input-staging/'+ file_name + ' s3://workfit-diarization-output-staging'
     subprocess.call(shlex.split(cmd))
 
 
