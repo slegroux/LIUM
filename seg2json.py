@@ -28,7 +28,7 @@ def transcribe_gcs_with_word_time_offsets(gcs_uri):
 
     audio = types.RecognitionAudio(uri=gcs_uri)
     config = types.RecognitionConfig(
-        encoding=enums.RecognitionConfig.AudioEncoding.FLAC,
+        encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=16000,
         language_code='en-US',
         enable_word_time_offsets=True)
@@ -51,6 +51,7 @@ def transcribe_gcs_with_word_time_offsets(gcs_uri):
     #             word,
     #             start_time.seconds + start_time.nanos * 1e-9,
     #             end_time.seconds + end_time.nanos * 1e-9))
+    res = {}
     for result in result.results:
         alternative = result.alternatives[0]
 #        print('Transcript: {}'.format(alternative.transcript))
@@ -69,7 +70,9 @@ def transcribe_gcs_with_word_time_offsets(gcs_uri):
             word_alignment['start_time'] = start_time.seconds + start_time.nanos * 1e-9
             word_alignment['end_time'] = end_time.seconds + end_time.nanos * 1e-9
             res['alignments'].append(word_alignment)
+    return(res)
 #    print(json.dumps(res))
+
 
 # [END def_transcribe_gcs]
 
@@ -125,12 +128,13 @@ def split_and_transcribe(file_name, start_time, end_time, output):
     cmd = " ".join(str(item) for item in cmd_list)
     subprocess.call(shlex.split(cmd))
     gs_bucket = 'gs://word-alignments'
-    cmd_list = ['gsutil', 'cp', file_name, gs_bucket]
+    cmd_list = ['gsutil', 'cp', output_name, gs_bucket]
     cmd = " ".join(str(item) for item in cmd_list)
     subprocess.call(shlex.split(cmd))
-    gs_uri = gs_bucket + '/' + base_name
-    print(output_name)
+    gs_uri = gs_bucket + '/' + os.path.basename(output_name)
+ 
     # res = transcribe_file_with_word_time_offsets(output_name)
+    # embed()
     res = transcribe_gcs_with_word_time_offsets(gs_uri)
     return(res)
         
